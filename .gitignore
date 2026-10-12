@@ -1,0 +1,31 @@
+# Secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
+application_default_credentials.json
+.gcloud/
+
+# Data extracts and downloads (never commit source rows)
+data/
+downloads/
+extracts/
+*.csv
+*.tsv
+*.parquet
+*.avro
+*.jsonl
+*.ndjson
+*.xlsx
+*.zip
+*.gz
+
+# Local tooling
+.DS_Store
+.vscode/
+.idea/
+__pycache__/
+.ipynb_checkpoints/
+.venv/
