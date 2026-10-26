@@ -1,7 +1,7 @@
 # P1: Grain, Model, History & Pipeline Plan
 
 **Project:** Chicago Taxi Shift & Demand Planner
-**Status:** draft for M07 peer diagnosis (2026-10-25). The change memo in Task 4 is completed after class.
+**Status:** revised P1 plan (2026-10-25). I missed the M07 class, so Task 4 records a self-diagnosis in place of partner feedback.
 
 **Linked artifacts**
 - Model diagram: [`docs/model.svg`](model.svg)
@@ -121,7 +121,7 @@ Source: [`docs/model.svg`](model.svg). It shows one fact (`fct_trip`), six dimen
 
 | Question | Fact / Serving object | Measures | Dimensions (role) | Filters |
 |---|---|---|---|---|
-| **Q1** | `fct_trip` → `srv_demand_slot` | trips = SUM(`trip_count`); average fare = SUM(`fare` where `is_fare_valid`) ÷ COUNT(valid trips) | `dim_time_of_day.hour_of_day`; `dim_date.weekday_name` (trip start date); `dim_community_area.area_name` (pickup) | Company view: `dim_company.company_name` = selected company. Market view: no company filter. Year 2022–2023. Area key 0 shown as "Unknown/outside". |
+| **Q1** | `fct_trip` → `srv_demand_slot` | trips = SUM(`trip_count`); average fare = SUM(`fare` where `is_fare_valid`) ÷ COUNT(valid trips) | `dim_time_of_day.hour_of_day`; `dim_date.weekday_name` (trip start date); `dim_community_area.area_name` (pickup) | Company view: `dim_company.company_name` = selected company. Comparison: other companies (market minus selected). Average fare hidden below 30 fare-valid trips per cell. Year 2022–2023. Area key 0 shown as "Unknown/outside". |
 | Q3 | `fct_trip` | company trips ÷ market trips per month | `dim_date.month_start` (trip start date); `dim_company` | Same company selection; denominator = all companies. |
 
 ### Date roles and shared meaning
@@ -129,6 +129,8 @@ Source: [`docs/model.svg`](model.svg). It shows one fact (`fct_trip`), six dimen
 - **Trip start date is the only date role.** Maria positions cabs for pickups, and Q2 shows that 90,806 window trips (0.7%) end on a later date and 3,156 end in a later month. Using the end date for some charts and the start date for others would make Q1 and Q3 disagree. End time stays on the fact as an attribute (`trip_end_local`). The 208 trips that end before they start and the 294 with a null end do not affect start-date reporting.
 - **One conformed company dimension** feeds both Q1 (company filter) and Q3 (share numerator). Both questions therefore use the same company names.
 - **"Average fare" has one definition:** `fare` > 0 and ≤ $1,000. It is computed from additive Serving columns. Q2 found 27,192 window trips with a null or non-positive fare. These count as trips but are excluded from the fare average.
+- **Small cells:** the dashboard shows an average fare only where a cell has at least 30 fare-valid trips. Smaller cells still show their trip count but are marked "too few trips". This matters most in the company view, where a slot × weekday × area cell can hold only a handful of trips.
+- **Market comparison:** "other companies" = market minus the selected company. It is computed from the same additive Serving columns, so a large company is not compared against a total that includes itself.
 
 ### History decision: company affiliation changes over time
 
@@ -219,6 +221,7 @@ Name conformance changes interpretation too. Unmerged, Blue Ribbon grows 35.4% f
 |---|---|---|---|---|
 | R1 (grain and relationships) | Repeated or lost trips inflate or deflate counts. Unmatched keys drop trips from joins. | **a.** Raw: row count, null and repeated `unique_key` (the Q1 query applied to Raw). **b.** Fact: `COUNT(*)` vs. `COUNT(DISTINCT trip_id)`; count of null foreign keys; rows with `pickup_area_key = 0`. | a: 12,877,486 rows, 0 null, 0 repeated. b: 12,877,486 = 12,877,486. 0 null keys (all 42 company names map). 755,383 rows in area 0. | a: `taxi_raw` after step 2. b: `taxi_curated` after step 8. Both in `sql/03_checks.sql` (P2). |
 | R2 (meaning of the Q1 result) | **a.** A time-zone conversion moves every demand slot. **b.** Invalid fares or averages of averages distort average fare. | **a.** Hour profile of `fct_trip` and trips at 02:xx on 2023-03-12. **b.** Reconcile `srv_demand_slot`: SUM(`trips`) = fact rows; SUM(`fare_valid_trips`) = fact valid rows; the overall average from Serving = the overall average from the fact. | a: peak at hour 17 with 921,860 trips; 70,986 at hour 3; 0 at 02:xx on 2023-03-12 (matches Task 1). b: SUM(`trips`) = 12,877,486. Valid trips = 12,877,486 − 27,192 − (fares above $1,000, at most 934, observed in P2). Averages are equal to the cent. | a: `taxi_curated` after step 8. b: `taxi_serving` after step 10. |
+| R2c (meaning of the Q1 result) | Averages from very small cells look like real differences. | For one mid-size company (5 Star Taxi) and for the market, count the hour × weekday × area cells and the share of trips that fall in cells with fewer than 30 fare-valid trips. | Market: almost all trips are in cells at or above the threshold. Company view: many cells are below it. Exact shares are observed in P2 and used to decide whether to coarsen to daypart or a 2-hour block. | `taxi_serving` after step 10. |
 | R3 (company history) | Name conformance or the attribution rule silently changes company totals. | Company trips by year from `fct_trip` + `dim_company`; all-company totals per year. | 5 Star Taxi 2022 = 157,880. Blue Ribbon 2022 = 189,022 (merged). Year totals 6,382,071 and 6,495,415. | `taxi_curated` after step 8, and again after the P3 change case. |
 
 ### Access choice
@@ -240,18 +243,35 @@ Create the three datasets in `savvy-primacy-249323` (US). Dry-run the Raw CTAS f
 ## 4. Diagnose and revise the plan
 
 ### Draft before M07
-This draft (Tasks 1–3, diagram and check code) is committed before the M07 class for peer diagnosis.
+The draft (Tasks 1–3, diagram and check code) was committed on 2026-10-25 as commit `65c5050`.
 
-### Change memo (completed after M07 peer diagnosis)
-- **Feedback that changed the plan:** TODO after class.
-- **Feedback not adopted, and why:** TODO after class.
-- **Main remaining uncertainty:** TODO after class. Current candidate: whether "Taxicab Insurance Agency Llc" and "Taxicab Insurance Agency, LLC" are one company. Both names are used throughout the window, and the 107 switches between them are spread over many dates (at most 12 on one day). The plan merges them by the name rule, but the evidence is weaker than for Blue Ribbon or KOAM.
+### How the plan was diagnosed
+I was absent from the M07 class, so I did not get a partner diagnosis. Instead I worked through the M07 peer-diagnosis questions on my own draft. For each question, I tried to answer it by pointing to a specific table or check in this plan, and I recorded a change wherever I could not. This is a self-diagnosis, not partner feedback.
+
+| Guide question | Where the plan answers it | Result |
+|---|---|---|
+| Who will use the result, and what decision does it support? | Task 1, audience and need | Answered |
+| What does one source row represent? How did you check? | Task 1, grain test and timestamp evidence | Answered |
+| How will the plan answer the main question? What is counted or compared? | Task 2, question-to-model trace | **Gap:** the comparison and the small-cell averages were not defined |
+| Could a row be counted twice or left out when data is combined? | Task 3, R1 (repeated keys, unmatched keys, area 0) | Answered |
+| If a value changes later, which value should an older report show? | Task 2, history decision | Answered |
+| What could make the answer misleading? | Task 3, R2 | **Gap:** small cells were not covered |
+| What is still uncertain? | Change memo below | Answered |
+| Who decides what the result means? | Task 3, access choice (owner and steward) | Answered |
+
+## P1 change memo
+
+- **Feedback that changed my plan:** From self-diagnosis against the M07 questions (I missed the class): (1) "What will you count or compare?" showed that the plan compared a company with a market total that includes that company. (2) "What could make the answer misleading?" showed that average fare in the company view can rest on very few trips per hour × weekday × area cell.
+- **What I changed and why:** I defined the comparison as "other companies" (market minus the selected company) in Task 2. A large company such as Flash Cab (about 20% of trips) would otherwise be compared partly with itself. I also added a 30-trip minimum before an average fare is shown, and a new check, R2c, that measures how many trips fall in small cells. The dashboard should not show noise as a demand pattern.
+- **Feedback I did not adopt and why:** (1) A Type 2 `dim_taxi` for company affiliation, which the question "which value should an older report show?" points toward. I kept event-time attribution on the fact instead. Each trip already records its own company, so a Type 2 taxi dimension would give the same report with more machinery. (2) Extending the window back to 2019 for a pre-pandemic baseline. 2019 holds 1,449,710 repeated keys that would need a new selection rule, and 2019 demand does not describe the post-2020 market Maria plans for.
+- **Most important remaining uncertainty:** whether "Taxicab Insurance Agency Llc" and "Taxicab Insurance Agency, LLC" are one company. Both names are used throughout the window, and the 107 switches between them are spread over many dates (at most 12 on one day). The plan merges them by the name rule, but the evidence is weaker than for Blue Ribbon or KOAM. In P2 I will check whether the two names share taxis in the same months. If they stay separate, Q3 shares for that company change.
 
 ### AI / tool accountability
 - **Claude Code (Anthropic):**
   - drafted the profiling SQL in `sql/01_source_profile.sql`;
   - ran the queries from my execution project with dry-runs and byte caps;
-  - drafted this plan and the SVG diagram.
+  - drafted this plan and the SVG diagram;
+  - drafted the Task 4 self-diagnosis against the M07 question list. I reviewed each gap it found and chose which changes to adopt.
 - **Verification:**
   - Every number in this plan comes from a query in `sql/01_source_profile.sql`, run on 2026-10-25, or from P0 results.
   - I checked that the window totals reconcile across queries (12,877,486 trips in Q1, Q2 and both treatments of Q4A).

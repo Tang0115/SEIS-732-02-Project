@@ -154,6 +154,6 @@
   <text x="412" y="815" class="m">trips, fare_sum, fare_valid_trips</text>
   <text x="412" y="839" class="n">Average fare per trip = SUM(fare_sum) / SUM(fare_valid_trips),</text>
   <text x="412" y="853" class="n">computed in the dashboard after filtering (no average of averages).</text>
-  <text x="412" y="867" class="n">Market view = all companies; company view = company filter.</text>
+  <text x="412" y="867" class="n">Company view vs. other companies (market minus selected); min 30 trips.</text>
   </g>
 </svg>
