@@ -2,7 +2,15 @@
 
 SEIS 732-02 Data Warehousing (Fall 2026) individual data-product project.
 
-**Current purpose (P0):** test whether the City of Chicago taxi trip data in BigQuery can support a planning dashboard for a Chicago taxi company's operations manager. The dashboard would show when and where demand and revenue are highest, how airport trips compare, and how the company's market share changes.
+**Purpose:** a planning dashboard for a Chicago taxi company's operations manager, built on City of Chicago taxi trip data in BigQuery. It shows when and where trips and average fares are highest, for one company compared with the whole market, and how the company's share of reported taxi trips changes.
+
+The product is a **historical planning baseline (2022–2023)**, not a live operations tool: the source ends 2023-12-31.
+
+## P1 artifacts
+
+- [docs/p1-plan.md](docs/p1-plan.md): question, source check and grain test, dimensional model, history decision, build plan and checks
+- [docs/model.svg](docs/model.svg): dimensional model diagram
+- [sql/01_source_profile.sql](sql/01_source_profile.sql): reproducible grain, time-zone and company-history checks
 
 ## P0 artifacts
 

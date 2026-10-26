@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="915" viewBox="0 0 1240 915" font-family="Helvetica, Arial, sans-serif" font-size="13">
+  <rect width="1240" height="915" fill="#ffffff"/>
+  <style>
+    .box { fill: #ffffff; stroke: #33475b; stroke-width: 1.5; }
+    .fact { fill: #fff7e6; stroke: #b76e00; stroke-width: 2; }
+    .seed { fill: #f4f4f4; stroke: #777; stroke-width: 1.2; stroke-dasharray: 4 3; }
+    .srv  { fill: #eef6ee; stroke: #2e7d32; stroke-width: 1.5; stroke-dasharray: 6 3; }
+    .hdr  { fill: #33475b; }
+    .hdrf { fill: #b76e00; }
+    .hdrs { fill: #2e7d32; }
+    .hdrg { fill: #777; }
+    .ht   { fill: #ffffff; font-weight: bold; font-size: 14px; }
+    .k    { font-family: Menlo, Consolas, monospace; font-size: 12px; fill: #1a1a1a; }
+    .m    { font-family: Menlo, Consolas, monospace; font-size: 12px; fill: #8a4b00; }
+    .n    { font-size: 11px; fill: #555; font-style: italic; }
+    .rel  { stroke: #33475b; stroke-width: 1.4; fill: none; }
+    .reld { stroke: #2e7d32; stroke-width: 1.4; fill: none; stroke-dasharray: 5 3; }
+    .card { font-size: 11px; fill: #33475b; font-weight: bold; }
+    .title { font-size: 20px; font-weight: bold; fill: #1a1a1a; }
+    .sub { font-size: 12px; fill: #444; }
+  </style>
+
+  <text x="20" y="32" class="title">Chicago Taxi Shift &amp; Demand Planner: P1 dimensional model</text>
+  <text x="20" y="52" class="sub">Business process: reported taxi trips. Fact type: transaction. Grain: one row represents one distinct reported taxi trip (source unique_key)</text>
+  <text x="20" y="67" class="sub">that starts between 2022-01-01 and 2023-12-31, Chicago local time. PK = primary key, FK = foreign key, NK = source (natural) key.</text>
+  <text x="20" y="82" class="sub">Warehouse keys are integers; source identifiers are kept as attributes. Lines join many (N) fact rows to one (1) dimension row.</text>
+
+  <g transform="translate(0,15)">
+  <!-- relationships (drawn first, under the boxes) -->
+  <!-- fact box: x 450..790, y 300..640 -->
+  <path class="rel" d="M450 360 L330 200"/>
+  <text x="430" y="352" class="card">N</text><text x="336" y="218" class="card">1</text>
+  <path class="rel" d="M450 420 L330 420"/>
+  <text x="432" y="414" class="card">N</text><text x="336" y="414" class="card">1</text>
+  <path class="rel" d="M450 540 L330 640"/>
+  <path class="rel" d="M450 560 L330 680"/>
+  <text x="430" y="534" class="card">N</text><text x="336" y="632" class="card">1</text>
+  <text x="345" y="578" class="n">pickup role</text>
+  <text x="372" y="690" class="n">dropoff role</text>
+  <path class="rel" d="M790 360 L910 200"/>
+  <text x="798" y="352" class="card">N</text><text x="896" y="218" class="card">1</text>
+  <path class="rel" d="M790 450 L910 450"/>
+  <text x="798" y="444" class="card">N</text><text x="898" y="444" class="card">1</text>
+  <path class="rel" d="M790 580 L910 680"/>
+  <text x="798" y="574" class="card">N</text><text x="896" y="674" class="card">1</text>
+  <path class="rel" d="M1060 330 L1060 270"/>
+  <text x="1066" y="322" class="card">N</text><text x="1066" y="282" class="card">1</text>
+  <path class="reld" d="M620 640 L620 730"/>
+  <text x="628" y="700" class="n">aggregated in Serving</text>
+
+  <!-- dim_date -->
+  <rect x="40" y="95" width="290" height="160" class="box"/>
+  <rect x="40" y="95" width="290" height="26" class="hdr"/>
+  <text x="50" y="113" class="ht">dim_date  (role: trip start date)</text>
+  <text x="50" y="140" class="k">PK date_key        INT yyyymmdd</text>
+  <text x="50" y="158" class="k">   calendar_date   DATE</text>
+  <text x="50" y="176" class="k">   weekday_num / weekday_name</text>
+  <text x="50" y="194" class="k">   is_weekend</text>
+  <text x="50" y="212" class="k">   month_start, year</text>
+  <text x="50" y="236" class="n">Shared by Q1 (weekday) and Q3 (month).</text>
+  <text x="50" y="250" class="n">End date is not a role; kept on the fact only.</text>
+
+  <!-- dim_time_of_day -->
+  <rect x="40" y="350" width="290" height="140" class="box"/>
+  <rect x="40" y="350" width="290" height="26" class="hdr"/>
+  <text x="50" y="368" class="ht">dim_time_of_day  (96 rows)</text>
+  <text x="50" y="395" class="k">PK time_key        INT 0..95</text>
+  <text x="50" y="413" class="k">   slot_start      TIME (15 min)</text>
+  <text x="50" y="431" class="k">   hour_of_day     0..23</text>
+  <text x="50" y="449" class="k">   daypart</text>
+  <text x="50" y="472" class="n">Built from stored value as Chicago wall-clock;</text>
+  <text x="50" y="485" class="n">no UTC-to-local conversion (see plan, Task 1).</text>
+
+  <!-- dim_community_area -->
+  <rect x="40" y="590" width="290" height="160" class="box"/>
+  <rect x="40" y="590" width="290" height="26" class="hdr"/>
+  <text x="50" y="608" class="ht">dim_community_area</text>
+  <text x="50" y="635" class="k">PK area_key        INT</text>
+  <text x="50" y="653" class="k">NK area_number     1..77, 0 = unknown</text>
+  <text x="50" y="671" class="k">   area_name</text>
+  <text x="50" y="689" class="k">   is_ohare        (area 76)</text>
+  <text x="50" y="707" class="k">   is_midway_area  (area 56, approx.)</text>
+  <text x="50" y="731" class="n">Role-playing: pickup (Q1) and dropoff.</text>
+  <text x="50" y="745" class="n">Null source area maps to key 0 "Unknown/outside".</text>
+
+  <!-- fact -->
+  <rect x="450" y="300" width="340" height="340" class="fact"/>
+  <rect x="450" y="300" width="340" height="28" class="hdrf"/>
+  <text x="462" y="319" class="ht">fct_trip  (transaction fact)</text>
+  <text x="462" y="348" class="k">PK trip_id          = source unique_key</text>
+  <text x="462" y="366" class="k">FK start_date_key   → dim_date</text>
+  <text x="462" y="384" class="k">FK start_time_key   → dim_time_of_day</text>
+  <text x="462" y="402" class="k">FK pickup_area_key  → dim_community_area</text>
+  <text x="462" y="420" class="k">FK dropoff_area_key → dim_community_area</text>
+  <text x="462" y="438" class="k">FK company_key      → dim_company</text>
+  <text x="462" y="456" class="k">FK taxi_key         → dim_taxi</text>
+  <text x="462" y="474" class="k">FK payment_type_key → dim_payment_type</text>
+  <text x="462" y="498" class="m">   trip_count        = 1</text>
+  <text x="462" y="516" class="m">   fare              NUMERIC</text>
+  <text x="462" y="534" class="m">   tips, trip_total  NUMERIC</text>
+  <text x="462" y="552" class="m">   trip_seconds, trip_miles</text>
+  <text x="462" y="570" class="k">   is_fare_valid     BOOL</text>
+  <text x="462" y="588" class="k">   trip_start_local, trip_end_local</text>
+  <text x="462" y="610" class="n">company_key = company recorded on this trip</text>
+  <text x="462" y="624" class="n">(event-time attribution, not the taxi's current company)</text>
+
+  <!-- dim_company -->
+  <rect x="910" y="95" width="300" height="175" class="box"/>
+  <rect x="910" y="95" width="300" height="26" class="hdr"/>
+  <text x="920" y="113" class="ht">dim_company  (Type 1)</text>
+  <text x="920" y="140" class="k">PK company_key      INT surrogate</text>
+  <text x="920" y="158" class="k">   company_name     conformed</text>
+  <text x="920" y="176" class="k">   is_owner_operator</text>
+  <text x="920" y="194" class="k">   display_name     for dashboard</text>
+  <text x="920" y="218" class="n">Source has no company ID, only a name string.</text>
+  <text x="920" y="232" class="n">Name corrections overwrite (Type 1); several</text>
+  <text x="920" y="246" class="n">source spellings map to one key.</text>
+  <text x="920" y="260" class="n">Filter for Q1; grouping for Q3.</text>
+
+  <!-- company_name_map seed -->
+  <rect x="910" y="330" width="300" height="80" class="seed"/>
+  <rect x="910" y="330" width="300" height="24" class="hdrg"/>
+  <text x="920" y="347" class="ht">company_name_map  (seed)</text>
+  <text x="920" y="372" class="k">NK source_company_name</text>
+  <text x="920" y="390" class="k">FK company_key → dim_company</text>
+  <text x="920" y="404" class="n">Curated lookup used to assign company_key.</text>
+
+  <!-- dim_taxi -->
+  <rect x="910" y="420" width="300" height="140" class="box"/>
+  <rect x="910" y="420" width="300" height="26" class="hdr"/>
+  <text x="920" y="438" class="ht">dim_taxi</text>
+  <text x="920" y="465" class="k">PK taxi_key         INT surrogate</text>
+  <text x="920" y="483" class="k">NK taxi_id          masked source ID</text>
+  <text x="920" y="501" class="k">   current_company_key  Type 1</text>
+  <text x="920" y="525" class="n">Current affiliation is for a roster view only.</text>
+  <text x="920" y="539" class="n">It is never used to attribute trips to companies.</text>
+  <text x="920" y="553" class="n">Never shown per taxi in the dashboard.</text>
+
+  <!-- dim_payment_type -->
+  <rect x="910" y="620" width="300" height="115" class="box"/>
+  <rect x="910" y="620" width="300" height="26" class="hdr"/>
+  <text x="920" y="638" class="ht">dim_payment_type</text>
+  <text x="920" y="665" class="k">PK payment_type_key INT</text>
+  <text x="920" y="683" class="k">NK payment_type     source string</text>
+  <text x="920" y="701" class="k">   tips_recorded    BOOL</text>
+  <text x="920" y="725" class="n">Cash tips are not recorded (P0).</text>
+
+  <!-- serving aggregate -->
+  <rect x="400" y="730" width="440" height="150" class="srv"/>
+  <rect x="400" y="730" width="440" height="26" class="hdrs"/>
+  <text x="412" y="748" class="ht">srv_demand_slot  (Serving aggregate, not a new grain of truth)</text>
+  <text x="412" y="775" class="k">company_key, year, weekday_num,</text>
+  <text x="412" y="793" class="k">hour_of_day, pickup_area_key</text>
+  <text x="412" y="815" class="m">trips, fare_sum, fare_valid_trips</text>
+  <text x="412" y="839" class="n">Average fare per trip = SUM(fare_sum) / SUM(fare_valid_trips),</text>
+  <text x="412" y="853" class="n">computed in the dashboard after filtering (no average of averages).</text>
+  <text x="412" y="867" class="n">Market view = all companies; company view = company filter.</text>
+  </g>
+</svg>
