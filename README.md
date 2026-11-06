@@ -6,6 +6,13 @@ SEIS 732-02 Data Warehousing (Fall 2026) individual data-product project.
 
 The product is a **historical planning baseline (2022–2023)**, not a live operations tool: the source ends 2023-12-31.
 
+## P2 artifacts
+
+- [docs/p2-build.md](docs/p2-build.md): build explanation, run order, acceptance-check results and field trace
+- [sql/02_ingest.sql](sql/02_ingest.sql): source → Raw (`taxi_raw.taxi_trips_2022_2023`)
+- [sql/03_curate.sql](sql/03_curate.sql): Raw → Curated (seeds, dimensions, `fct_trip`)
+- [sql/04_acceptance.sql](sql/04_acceptance.sql): executable acceptance checks
+
 ## P1 artifacts
 
 - [docs/p1-plan.md](docs/p1-plan.md): question, source check and grain test, dimensional model, history decision, build plan and checks
