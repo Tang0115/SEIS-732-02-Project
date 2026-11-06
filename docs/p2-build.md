@@ -11,7 +11,11 @@
 
 **Earlier work reused:** [P1 plan](p1-plan.md), [model diagram](model.svg), [`sql/01_source_profile.sql`](../sql/01_source_profile.sql). This repository holds code and aggregate results only, with no source rows.
 
-**Review status.** P0 was approved with conditions (2026-10-16), and the P1 plan addresses those conditions (repeated keys, historical-baseline label, share of reported trips). P1 feedback was still pending when this build ran, so the build follows the submitted P1 plan. Any later "Revise before P2" item will be recorded here.
+**Review status.** P0 was approved with conditions (2026-10-16), and the P1 plan addresses those conditions (repeated keys, historical-baseline label, share of reported trips). P1 feedback had not been received as of 2026-11-06, so this build follows the submitted P1 plan (commit `2ee103b`). Any later "Revise before P2" item will be recorded here, along with the change it causes. These are the specific decisions I am bringing to the instructor while feedback is pending:
+
+1. **Event-time company attribution instead of a Type 2 `dim_taxi`.** Each trip uses the company recorded on that trip. Is this an acceptable history treatment for P3?
+2. **Name merges.** The four merges include Taxicab Insurance, which is now backed by the evidence in section 1. Does the instructor agree that a spelling change is Type 1 conformance, not a business change?
+3. **Scope.** The window is 2022–2023 only, and the source is static. Is this bounded subset enough for the P3 rerun and changed-input demonstrations?
 
 ---
 
